@@ -12,5 +12,19 @@ return [
      */
     'cache' => 'file',
 
-    'configs' => []
+    /**
+     * Image cache life time
+     * This is given in minutes
+     * Here the cache for images is
+     * one hour
+     */
+    'lifetime' => 60,
+
+    'templates' => [
+        'small' => [
+            'height' => 500,
+            'width' => 250,
+            'inCanvas' => true
+        ]
+    ]
 ];

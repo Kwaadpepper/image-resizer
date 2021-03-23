@@ -2,6 +2,7 @@
 
 namespace Kwaadpepper\ImageResizer;
 
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Intervention\Image\ImageCache;
@@ -11,8 +12,13 @@ use Kwaadpepper\ImageResizer\Exceptions\ImageResizer as ExceptionsImageResizer;
 
 class ImageResizer
 {
-    public static function resizeImage(string $imageSource): string
+    public static function resizeImage(
+        string $imageSource,
+        string $configName = null
+    ): string
     {
+        $relativePublicPath = 'cache/images';
+
         if (!File::exists($imageSource)) {
             Log::debug(sprintf(
                 'Image Resizer: image %s not found',
@@ -21,70 +27,111 @@ class ImageResizer
             return $imageSource;
         }
 
-        if (!File::isReadable($imageSource)) {
-            throw new ExceptionsImageResizer(sprintf(
-                'File %s is not readable',
-                $imageSource
-            ));
-        }
-
-        $relativePublicPath = 'cache/images';
-
+        self::assertFileIsReadable($imageSource);
         File::ensureDirectoryExists(public_path($relativePublicPath));
 
-        $fileData = File::get($imageSource);
         $fileBaseName = File::basename($imageSource);
-
-        $lifeTime = 10;
-        $width = 100;
-        $height = 50;
-        $cache = config('image-resizer.cache');
-        $publicPath = public_path(sprintf(
-            '%s/%s',
-            $relativePublicPath,
-            $fileBaseName
-        ));
+        $fileLastModified = File::lastModified($imageSource);
 
         $iManager = self::getManager();
 
         try {
-            // make the image from cache
-            $iManager->cache(function (ImageCache &$image) use (
-                $iManager,
-                $cache,
-                $fileBaseName,
-                $lifeTime,
-                $publicPath,
-                $fileData,
-                $width,
-                $height
-            ) {
-                // Set cache driver if set in config
-                if ($cache) {
-                    $cache = app()->make('cache')->driver($cache);
-                    $image = (new ImageCache(
-                        $iManager->getManager(),
-                        $cache
-                    ));
-                }
+            // Set cache driver if set in config
+            $cache = config('image-resizer.cache');
+            $cache = app()->make('cache')->driver($cache);
+            extract(self::getConfigValues($configName));
 
-                /** @var \Illuminate\Cache\Repository $cache */
-                $cache = $image->cache;
+            $hash = md5($fileBaseName . $fileLastModified . $configName .
+            $width . $height);
 
-                if ($cache->has(md5($fileBaseName))) {
-                    throw new ImageIsAlreadyCached();
-                }
+            $lifeTime = config('image-resizer.lifeTime', 10);
 
-                $image->make($fileData)
-                    ->resize($width, $height)->save($publicPath);
-                // Intervention Cache use cache value as minutes
-                $cache->put(md5($fileBaseName), true, $lifeTime * 60);
-            }, $lifeTime, true);
+            /** @var \Illuminate\Cache\Repository $image->cache */
+            if ($cache->has($hash)) {
+                throw new ImageIsAlreadyCached();
+            }
+
+            $fileData = File::get($imageSource);
+            $publicPath = public_path(sprintf(
+                '%s/%s',
+                $relativePublicPath,
+                $fileBaseName
+            ));
+
+            $image = $iManager::make($fileData);
+
+            $image = $image->resize($width, $height, function ($constraint) {
+                $constraint->aspectRatio();
+            });
+            if ($inCanvas) {
+                $image = $image->resizeCanvas($width, $height, 'center', false, 'rgba(0, 0, 0, 0)');
+            }
+            $image->save($publicPath);
+
+            // Intervention Cache use cache value as minutes
+            $cache->put(
+                $hash,
+                true,
+                Carbon::now()->addMinutes($lifeTime * 60)
+            );
         } catch (ImageIsAlreadyCached $e) {
             Log::debug(sprintf('Image %s is already cached', $fileBaseName));
         }
 
         return sprintf('%s/%s', $relativePublicPath, $fileBaseName);
+    }
+
+    /**
+     * Get the config values
+     *
+     * @param string $configName
+     * @return array
+     * @throws ImageResizer if config is not valid
+     */
+    private static function getConfigValues(string $configName = null): array
+    {
+        $config = config(sprintf('image-resizer.templates.%s', $configName));
+        if (!$config) {
+            $config = config('image-resizer.templates');
+            $config = array_shift($config);
+        }
+
+        $out = [];
+        $p = ['width', 'height'];
+        foreach ($p as $required) {
+            if (
+                !\array_key_exists($required, $config) or
+                !is_int($config[$required])
+            ) {
+                throw new ExceptionsImageResizer(
+                    sprintf(
+                        'Invalid config %s check %s is present and is integer',
+                        $required,
+                        $configName
+                    )
+                );
+            }
+            $out[$required] = $config[$required];
+        }
+        $out['inCanvas'] = array_key_exists('inCanvas', $config) ? $config['inCanvas'] : false;
+        return $out;
+    }
+
+    /**
+     * Assert the file exists and is readable
+     *
+     * @param string $path
+     * @throws ExceptionsImageResizer if file does not exists
+     * @return void
+     */
+    private static function assertFileIsReadable(string $path)
+    {
+        if (!File::isReadable($path)) {
+            throw new ExceptionsImageResizer(sprintf(
+                'File %s is not readable',
+                $path
+            ));
+        }
     }
 
     /**
