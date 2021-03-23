@@ -1,0 +1,46 @@
+{
+    "name": "kwaadpepper/image-resizer",
+    "description": "Resize images on the fly and cache them",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Jérémy Munsch",
+            "email": "github@jeremydev.ovh",
+            "homepage": "https://jeremydev.ovh"
+        }
+    ],
+    "homepage": "https://github.com/kwaadpepper/image-resizer",
+    "keywords": [
+        "Laravel",
+        "Images",
+        "Resize"
+    ],
+    "require": {
+        "illuminate/support": "~7|~8",
+        "laravel/framework": "~7|~8",
+        "intervention/image": "^2.5",
+        "intervention/imagecache": "^2.5"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "~9.0",
+        "squizlabs/php_codesniffer": "^3.5",
+        "orchestra/testbench": "^6.13"
+    },
+    "autoload": {
+        "psr-4": {
+            "Kwaadpepper\\ImageResizer\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Kwaadpepper\\ImageResizer\\Tests\\": "tests"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Kwaadpepper\\ImageResizer\\ImageResizerServiceProvider"
+            ]
+        }
+    }
+}
