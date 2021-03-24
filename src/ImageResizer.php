@@ -5,6 +5,7 @@ namespace Kwaadpepper\ImageResizer;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
+use Intervention\Image\Image;
 use Intervention\Image\ImageCache;
 use Intervention\Image\ImageManagerStatic;
 use Kwaadpepper\ImageResizer\Exceptions\ImageIsAlreadyCached;
@@ -12,13 +13,8 @@ use Kwaadpepper\ImageResizer\Exceptions\ImageResizer as ExceptionsImageResizer;
 
 class ImageResizer
 {
-    public static function resizeImage(
-        string $imageSource,
-        string $configName = null
-    ): string
+    public static function resizeImage(string $imageSource, string $configName = null): string
     {
-        $relativePublicPath = 'cache/images';
-
         if (!File::exists($imageSource)) {
             Log::debug(sprintf(
                 'Image Resizer: image %s not found',
@@ -27,58 +23,96 @@ class ImageResizer
             return $imageSource;
         }
 
+        $relativePath = config('image-resizer.cachePath');
+
         self::assertFileIsReadable($imageSource);
-        File::ensureDirectoryExists(public_path($relativePublicPath));
+        File::ensureDirectoryExists($relativePath);
 
         $fileBaseName = File::basename($imageSource);
         $fileLastModified = File::lastModified($imageSource);
 
-        $iManager = self::getManager();
+        $path = sprintf(
+            '%s/%s',
+            $relativePath,
+            $fileBaseName
+        );
 
         try {
-            // Set cache driver if set in config
-            $cache = config('image-resizer.cache');
-            $cache = app()->make('cache')->driver($cache);
+
             extract(self::getConfigValues($configName));
 
-            $hash = md5($fileBaseName . $fileLastModified . $configName .
-            $width . $height);
+            self::assertFormatIsValid($format);
 
+            $hash = md5($fileBaseName . $fileLastModified . $configName .
+            $width . $height . $format);
             $lifeTime = config('image-resizer.lifeTime', 10);
 
-            /** @var \Illuminate\Cache\Repository $image->cache */
+            /** @var \Illuminate\Cache\Repository $cache */
+            $cache = self::getCache();
+
             if ($cache->has($hash)) {
                 throw new ImageIsAlreadyCached();
             }
 
-            $fileData = File::get($imageSource);
-            $publicPath = public_path(sprintf(
-                '%s/%s',
-                $relativePublicPath,
-                $fileBaseName
-            ));
+            $image = self::genImage($imageSource, $width, $height);
 
-            $image = $iManager::make($fileData);
-
-            $image = $image->resize($width, $height, function ($constraint) {
-                $constraint->aspectRatio();
-            });
             if ($inCanvas) {
-                $image = $image->resizeCanvas($width, $height, 'center', false, 'rgba(0, 0, 0, 0)');
+                self::setInCanvas($image, $width, $height);
             }
-            $image->save($publicPath);
 
-            // Intervention Cache use cache value as minutes
+            self::updatePathExtension($path, $format);
+
+            $image->save($path, null, $format);
+
             $cache->put(
                 $hash,
                 true,
-                Carbon::now()->addMinutes($lifeTime * 60)
+                Carbon::now()->addMinutes($lifeTime)
             );
         } catch (ImageIsAlreadyCached $e) {
             Log::debug(sprintf('Image %s is already cached', $fileBaseName));
         }
 
-        return sprintf('%s/%s', $relativePublicPath, $fileBaseName);
+        return $path;
+    }
+
+    /**
+     * Generate image
+     *
+     * @param string $sourcePath
+     * @param integer $width
+     * @param integer $height
+     * @return \Intervention\Image\Image
+     */
+    private static function genImage(string $sourcePath, int $width, int $height): Image
+    {
+        $iManager = self::getManager();
+        $fileData = File::get($sourcePath);
+        $image = $iManager::make($fileData);
+
+        $image = $image->resize($width, $height, function ($constraint) {
+            $constraint->aspectRatio();
+        });
+        return $image;
+    }
+
+    /**
+     * Set the image in a canvas
+     *
+     * @param Image $image
+     * @param integer $width
+     * @param integer $height
+     * @return void
+     */
+    private static function setInCanvas(Image &$image, int $width, int $height)
+    {
+        $image->resizeCanvas(
+            $width,
+            $height,
+            'center',
+            false,
+            'rgba(0, 0, 0, 0)'
+        );
     }
 
     /**
@@ -113,8 +147,46 @@ class ImageResizer
             }
             $out[$required] = $config[$required];
         }
-        $out['inCanvas'] = array_key_exists('inCanvas', $config) ? $config['inCanvas'] : false;
+        $out['inCanvas'] = array_key_exists('inCanvas', $config) ?
+            $config['inCanvas'] : false;
+        $out['format'] = array_key_exists('format', $config) ?
+            $config['format'] : false;
         return $out;
+    }
+
+    /**
+     * Update extension path
+     *
+     * @param string $path
+     * @param string $format
+     * @return void
+     */
+    private static function updatePathExtension(string &$path, string $format)
+    {
+        $o = explode('.', $path);
+        array_pop($o);
+        $o[] = $format;
+        $path = implode('.', $o);
+    }
+
+    /**
+     * Assert format is something of
+     * 'jpg', 'png', 'gif', 'tif', 'bmp', 'ico', 'psd', 'webp'
+     *
+     * @param string $format
+     * @return void
+     * @throws ExceptionsImageResizer if format is not valid
+     */
+    private static function assertFormatIsValid(string $format)
+    {
+        $formats = ['jpg', 'png', 'gif', 'tif', 'bmp', 'ico', 'psd', 'webp'];
+        if (!in_array($format, $formats)) {
+            throw new ExceptionsImageResizer(sprintf(
+                'format %s is not accepted, choose within %s',
+                $format,
+                implode(',', $formats)
+            ));
+        }
     }
 
     /**
@@ -132,6 +204,18 @@ class ImageResizer
                 $path
             ));
         }
+    }
+
+    /**
+     * Get the cache driver
+     *
+     * @return void
+     */
+    private static function getCache()
+    {
+        // Set output driver if set in config
+        $cache = config('image-resizer.cache');
+        return app()->make('cache')->driver($cache);
     }
 
     /**

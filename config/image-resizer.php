@@ -6,11 +6,17 @@ return [
      * this can be 'imagick' or 'gd'
      */
     'driver' => 'gd',
+
     /**
      * The cache driver to use as defined
      * in config/cache of your app
      */
     'cache' => 'file',
+
+    /**
+     * The path where to store image in cache
+     */
+    'cachePath' => 'cache/images',
 
     /**
      * Image cache life time
@@ -20,11 +26,27 @@ return [
      */
     'lifetime' => 60,
 
+    /**
+     * Format can specifiy to which format save the image
+     *              JPEG PNG GIF TIF BMP ICO PSD WebP
+     *   GD         ✔️  ✔️  ✔️   -   -   -   -  ✔️ *
+     *   Imagick    ✔️  ✔️  ✔️  ✔️  ✔️  ✔️ ✔️  ✔️ *
+     *   For WebP support GD driver must be used with PHP 5 >= 5.5.0 or PHP 7
+     *   in order to use imagewebp(). If Imagick is used, it must be compiled
+     *   with libwebp for WebP support.
+     * example :
+     *  'small' => [
+     *      'height' => 500,
+     *      'width' => 250,
+     *      'inCanvas' => true,
+     *  ],
+     *  'smallWebp' => [
+     *      'height' => 500,
+     *      'width' => 250,
+     *      'inCanvas' => true,
+     *      'format' => 'webp'
+     *  ]
+     */
     'templates' => [
-        'small' => [
-            'height' => 500,
-            'width' => 250,
-            'inCanvas' => true
-        ]
     ]
 ];
