@@ -47,10 +47,12 @@ class ImageResizer
             $width . $height . $format);
             $lifeTime = config('image-resizer.lifeTime', 10);
 
+            self::updatePathExtension($path, $format);
+
             /** @var \Illuminate\Cache\Repository $cache */
             $cache = self::getCache();
 
-            if ($cache->has($hash)) {
+            if ($cache->has($hash) && File::exists($path)) {
                 throw new ImageIsAlreadyCached();
             }
 
@@ -60,7 +62,6 @@ class ImageResizer
                 self::setInCanvas($image, $width, $height);
             }
 
-            self::updatePathExtension($path, $format);
 
             $image->save($path, null, $format);
 
