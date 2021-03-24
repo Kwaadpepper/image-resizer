@@ -5,7 +5,7 @@
 [![Build Status][ico-travis]][link-travis]
 [![StyleCI][ico-styleci]][link-styleci]
 
-This is where your description should go. Take a look at [contributing.md](contributing.md) to see a to do list.
+Resizes an image on the fly and returns the new link
 
 ## Installation
 
@@ -16,6 +16,25 @@ $ composer require kwaadpepper/image-resizer
 ```
 
 ## Usage
+
+1 - Publish config
+
+    php artisan vendor:publish --provider="Kwaadpepper\Enum\EnumServiceProvider"
+
+2 - Set a config in templates array (config/image-resizer.php)
+
+    'templates' => [
+        'smallWebp' => [
+            'height' => 500,
+            'width' => 250,
+            'inCanvas' => true,
+            'format' => 'webp'
+        ]
+    ]
+
+3 - in your blade template override an image link
+
+    <img src="{{ asset(resize('images/volaillesfr_landing.png', 'smallWebp')) }}" alt="My resized image">
 
 ## Change log
 
