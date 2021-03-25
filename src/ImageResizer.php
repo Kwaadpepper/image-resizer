@@ -44,7 +44,7 @@ class ImageResizer
             self::assertFormatIsValid($format);
 
             $hash = md5($fileBaseName . $fileLastModified . $configName .
-            $width . $height . $format);
+                $width . $height . $format);
             $lifeTime = config('image-resizer.lifeTime', 10);
 
             self::updatePathExtension($path, $format);
@@ -57,6 +57,10 @@ class ImageResizer
             }
 
             $image = self::genImage($imageSource, $width, $height);
+
+            if ($trim) {
+                self::trim($image);
+            }
 
             if ($inCanvas) {
                 self::setInCanvas($image, $width, $height);
@@ -117,6 +121,17 @@ class ImageResizer
     }
 
     /**
+     * Trim the image
+     *
+     * @param Image $image
+     * @return void
+     */
+    private static function trim(Image &$image)
+    {
+        $image->trim();
+    }
+
+    /**
      * Get the config values
      *
      * @param string $configName
@@ -152,6 +167,8 @@ class ImageResizer
             $config['inCanvas'] : false;
         $out['format'] = array_key_exists('format', $config) ?
             $config['format'] : false;
+        $out['trim'] = array_key_exists('trim', $config) ?
+            $config['trim'] : false;
         return $out;
     }
 
