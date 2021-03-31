@@ -34,6 +34,8 @@ return [
      *   For WebP support GD driver must be used with PHP 5 >= 5.5.0 or PHP 7
      *   in order to use imagewebp(). If Imagick is used, it must be compiled
      *   with libwebp for WebP support.
+     *   resize => will resize the image (boolean)
+     *   keepRatio => will keep image ratio wile resizing (boolean)
      *   trim => boolean to trim the image using border color
      *   inCanvas => to make sure image boundarie is respected
      * example :

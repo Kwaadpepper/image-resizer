@@ -62,6 +62,10 @@ class ImageResizer
                 self::trim($image);
             }
 
+            if ($resize) {
+                self::resize($image, $width, $height, $keepRatio);
+            }
+
             if ($inCanvas) {
                 self::setInCanvas($image, $width, $height);
             }
@@ -121,6 +125,27 @@ class ImageResizer
     }
 
     /**
+     * Set the image in a canvas
+     *
+     * @param Image $image
+     * @param integer $width
+     * @param integer $height
+     * @return void
+     */
+    private static function resize(Image &$image, int $width, int $height, bool $keepRatio = false)
+    {
+        $image->resize(
+            $width,
+            $height,
+            function ($constraint) use ($keepRatio) {
+                if ($keepRatio) {
+                    $constraint->aspectRatio();
+                }
+            }
+        );
+    }
+
+    /**
      * Trim the image
      *
      * @param Image $image
@@ -167,6 +192,10 @@ class ImageResizer
             $config['inCanvas'] : false;
         $out['format'] = array_key_exists('format', $config) ?
             $config['format'] : false;
+        $out['resize'] = array_key_exists('resize', $config) ?
+            $config['resize'] : false;
+        $out['keepRatio'] = array_key_exists('keepRatio', $config) ?
+            $config['keepRatio'] : false;
         $out['trim'] = array_key_exists('trim', $config) ?
             $config['trim'] : false;
         return $out;
