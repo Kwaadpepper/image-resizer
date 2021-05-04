@@ -28,7 +28,8 @@ $ composer require kwaadpepper/image-resizer
             'height' => 500,
             'width' => 250,
             'inCanvas' => true,
-            'format' => 'webp'
+            'format' => 'webp',
+            'trim' => ['transparent', null, 10]
         ]
     ]
 

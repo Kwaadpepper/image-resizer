@@ -6,7 +6,6 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Intervention\Image\Image;
-use Intervention\Image\ImageCache;
 use Intervention\Image\ImageManagerStatic;
 use Kwaadpepper\ImageResizer\Exceptions\ImageIsAlreadyCached;
 use Kwaadpepper\ImageResizer\Exceptions\ImageResizer as ExceptionsImageResizer;
@@ -58,8 +57,8 @@ class ImageResizer
 
             $image = self::genImage($imageSource, $width, $height);
 
-            if ($trim) {
-                self::trim($image);
+            if (count($trim)) {
+                self::trim($image, $trim);
             }
 
             if ($resize) {
@@ -69,7 +68,6 @@ class ImageResizer
             if ($inCanvas) {
                 self::setInCanvas($image, $width, $height);
             }
-
 
             $image->save($path, null, $format);
 
@@ -151,9 +149,9 @@ class ImageResizer
      * @param Image $image
      * @return void
      */
-    private static function trim(Image &$image)
+    private static function trim(Image &$image, array $config = [])
     {
-        $image->trim();
+        call_user_func_array([$image, 'trim'], $config);
     }
 
     /**
@@ -197,7 +195,7 @@ class ImageResizer
         $out['keepRatio'] = array_key_exists('keepRatio', $config) ?
             $config['keepRatio'] : false;
         $out['trim'] = array_key_exists('trim', $config) ?
-            $config['trim'] : false;
+            (is_array($config['trim']) ? $config['trim'] : []) : [];
         return $out;
     }
 

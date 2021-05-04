@@ -43,7 +43,7 @@ return [
      *      'height' => 500,
      *      'width' => 250,
      *      'inCanvas' => true,
-     *      'trim' => true
+     *      'trim' => ['transparent', null, 10]
      *  ],
      *  'smallWebp' => [
      *      'height' => 500,
