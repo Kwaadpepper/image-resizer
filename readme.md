@@ -19,7 +19,7 @@ $ composer require kwaadpepper/image-resizer
 
 1 - Publish config
 
-    php artisan vendor:publish --provider="Kwaadpepper\Enum\EnumServiceProvider"
+    php artisan vendor:publish --provider="Kwaadpepper\ImageResizer\ImageResizerServiceProvider"
 
 2 - Set a config in templates array (config/image-resizer.php)
 
