@@ -97,9 +97,6 @@ class ImageResizer
         $fileData = File::get($sourcePath);
         $image = $iManager::make($fileData);
 
-        $image = $image->resize($width, $height, function ($constraint) {
-            $constraint->aspectRatio();
-        });
         return $image;
     }
 
