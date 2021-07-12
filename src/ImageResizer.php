@@ -14,7 +14,7 @@ class ImageResizer
 {
     public static function resizeImage(string $imageSource, string $configName = null): string
     {
-        if (!File::exists($imageSource)) {
+        if (!File::exists($imageSource) or File::isDirectory($imageSource)) {
             Log::debug(sprintf(
                 'Image Resizer: image %s not found',
                 $imageSource
@@ -55,7 +55,7 @@ class ImageResizer
                 throw new ImageIsAlreadyCached();
             }
 
-            $image = self::genImage($imageSource, $width, $height);
+            $image = self::genImage($imageSource);
 
             if (count($trim)) {
                 self::trim($image, $trim);
@@ -87,11 +87,9 @@ class ImageResizer
      * Generate image
      *
      * @param string $sourcePath
-     * @param integer $width
-     * @param integer $height
      * @return \Intervention\Image\Image
      */
-    private static function genImage(string $sourcePath, int $width, int $height): Image
+    private static function genImage(string $sourcePath): Image
     {
         $iManager = self::getManager();
         $fileData = File::get($sourcePath);
