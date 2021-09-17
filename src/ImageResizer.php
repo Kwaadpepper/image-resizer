@@ -177,11 +177,10 @@ class ImageResizer
         $out['trim'] = array_key_exists('trim', $config) ?
             (is_array($config['trim']) ? $config['trim'] : []) : [];
 
-
         $p = ['width', 'height'];
         foreach ($p as $required) {
             if (
-                $out['resize'] and (
+                ($out['resize'] or $out['inCanvas']) and (
                     !\array_key_exists($required, $config) or
                     !is_int($config[$required]))
             ) {
@@ -195,6 +194,7 @@ class ImageResizer
             }
             $out[$required] = $config[$required] ?? 0;
         }
+
         return $out;
     }
 
