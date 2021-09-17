@@ -38,6 +38,7 @@ return [
      *   keepRatio => will keep image ratio wile resizing (boolean)
      *   trim => boolean to trim the image using border color
      *   inCanvas => to make sure image boundarie is respected
+     *   format => select tha wantd ouput form, yan can just convert images if you want
      * example :
      *  'small' => [
      *      'height' => 500,
@@ -49,6 +50,9 @@ return [
      *      'height' => 500,
      *      'width' => 250,
      *      'inCanvas' => true,
+     *      'format' => 'webp'
+     *  ],
+     *  'justconvertImage' => [
      *      'format' => 'webp'
      *  ]
      */

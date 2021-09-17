@@ -165,22 +165,7 @@ class ImageResizer
         }
 
         $out = [];
-        $p = ['width', 'height'];
-        foreach ($p as $required) {
-            if (
-                !\array_key_exists($required, $config) or
-                !is_int($config[$required])
-            ) {
-                throw new ExceptionsImageResizer(
-                    sprintf(
-                        'Invalid config %s check %s is present and is integer',
-                        $required,
-                        $configName
-                    )
-                );
-            }
-            $out[$required] = $config[$required];
-        }
+
         $out['inCanvas'] = array_key_exists('inCanvas', $config) ?
             $config['inCanvas'] : false;
         $out['format'] = array_key_exists('format', $config) ?
@@ -191,6 +176,25 @@ class ImageResizer
             $config['keepRatio'] : false;
         $out['trim'] = array_key_exists('trim', $config) ?
             (is_array($config['trim']) ? $config['trim'] : []) : [];
+
+
+        $p = ['width', 'height'];
+        foreach ($p as $required) {
+            if (
+                $out['resize'] and (
+                    !\array_key_exists($required, $config) or
+                    !is_int($config[$required]))
+            ) {
+                throw new ExceptionsImageResizer(
+                    sprintf(
+                        'Invalid config %s check %s is present and is integer',
+                        $required,
+                        $configName
+                    )
+                );
+            }
+            $out[$required] = $config[$required] ?? 0;
+        }
         return $out;
     }
 
