@@ -2,6 +2,11 @@
 
 All notable changes to `ImageResizer` will be documented in this file.
 
+## VERSION 0.0.8
+- Fixed serialize config to md5 to prevent cache collisions
+  Use hash in cache path name to prevent cached images collisions
+- Fixed Add in Canvas check for required params
+
 ## VERSION 0.0.7
 - Changed Removed required check in with and height if resize is false
   You can now just convert images using only format
