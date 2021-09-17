@@ -30,12 +30,6 @@ class ImageResizer
         $fileBaseName = File::basename($imageSource);
         $fileLastModified = File::lastModified($imageSource);
 
-        $path = sprintf(
-            '%s/%s',
-            $relativePath,
-            $fileBaseName
-        );
-
         try {
             $config = self::getConfigValues($configName);
             extract($config);
@@ -44,6 +38,13 @@ class ImageResizer
 
             $hash = self::configToMd5($config, $fileLastModified);
             $lifeTime = config('image-resizer.lifeTime', 10);
+
+            $path = sprintf(
+                '%s/%s_%s',
+                $relativePath,
+                $hash,
+                $fileBaseName
+            );
 
             self::updatePathExtension($path, $format);
 
