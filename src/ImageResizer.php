@@ -37,13 +37,12 @@ class ImageResizer
         );
 
         try {
-
-            extract(self::getConfigValues($configName));
+            $config = self::getConfigValues($configName);
+            extract($config);
 
             self::assertFormatIsValid($format);
 
-            $hash = md5($fileBaseName . $fileLastModified . $configName .
-                $width . $height . $format);
+            $hash = self::configToMd5($config, $fileLastModified);
             $lifeTime = config('image-resizer.lifeTime', 10);
 
             self::updatePathExtension($path, $format);
@@ -81,6 +80,38 @@ class ImageResizer
         }
 
         return $path;
+    }
+
+    public static function configToMd5(array $config, $fileLastModified): string
+    {
+        $string = '';
+        foreach ($config as $param => $value) {
+            switch (gettype($value)) {
+                case 'boolean':
+                    $string .= $param . ($value ? 'true' : 'false');
+                    break;
+                case 'float':
+                case 'double':
+                case 'integer':
+                    $string .= $param . ((string)$value);
+                    break;
+                case 'string':
+                    $string .= "$param$value";
+                    break;
+                case 'array':
+                    $string .= $param . serialize($value);
+                    break;
+                default:
+                    throw new ExceptionsImageResizer(
+                        sprintf(
+                            'Invalid config %s, unsupported type',
+                            $param
+                        )
+                    );
+            }
+        }
+        $string .= $fileLastModified;
+        return md5($string);
     }
 
     /**
