@@ -2,6 +2,9 @@
 
 All notable changes to `ImageResizer` will be documented in this file.
 
+## VERSION 0.0.10
+- Fixed file name slugify
+
 ## VERSION 0.0.9
 - Fixed slugify image basename to avoir further exceptions
 - Ignore non binary images (like svg)
