@@ -5,6 +5,7 @@ namespace Kwaadpepper\ImageResizer;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Intervention\Image\Exception\NotReadableException;
 use Intervention\Image\Image;
 use Intervention\Image\ImageManagerStatic;
@@ -28,7 +29,7 @@ class ImageResizer
         self::assertFileIsReadable($imageSource);
         File::ensureDirectoryExists($relativePath);
 
-        $fileBaseName = File::basename($imageSource);
+        $fileBaseName = Str::slug(File::basename($imageSource));
         $fileLastModified = File::lastModified($imageSource);
 
         try {
