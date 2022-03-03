@@ -29,7 +29,11 @@ class ImageResizer
         self::assertFileIsReadable($imageSource);
         File::ensureDirectoryExists($relativePath);
 
-        $fileBaseName = Str::slug(File::basename($imageSource));
+        $fileBaseName = sprintf(
+            '%s.%s',
+            Str::slug(File::name($imageSource)),
+            File::extension($imageSource)
+        );
         $fileLastModified = File::lastModified($imageSource);
 
         try {
