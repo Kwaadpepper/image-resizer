@@ -5,6 +5,7 @@ namespace Kwaadpepper\ImageResizer;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
+use Intervention\Image\Exception\NotReadableException;
 use Intervention\Image\Image;
 use Intervention\Image\ImageManagerStatic;
 use Kwaadpepper\ImageResizer\Exceptions\ImageIsAlreadyCached;
@@ -81,6 +82,24 @@ class ImageResizer
         }
 
         return $path;
+    }
+
+    /**
+     * Igore possible exceptions
+     * like passing an svg which is not a binary image
+     * and cannot be resized
+     *
+     * @param string $imageSource
+     * @param string|null $configName
+     * @return string
+     */
+    public static function resizeImageOrIgnore(string $imageSource, string $configName = null): string
+    {
+        try {
+            return self::resizeImage($imageSource, $configName);
+        } catch (NotReadableException $e) {
+            return $imageSource;
+        }
     }
 
     public static function configToMd5(array $config, $fileLastModified): string

@@ -11,7 +11,7 @@ use Kwaadpepper\ImageResizer\ImageResizer;
  */
 function resize(string $path, string $configName = null): string
 {
-    return ImageResizer::resizeImage($path, $configName);
+    return ImageResizer::resizeImageOrIgnore($path, $configName);
 }
 
 /**
