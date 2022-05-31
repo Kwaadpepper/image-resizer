@@ -19,6 +19,11 @@ class ImageResizerServiceProvider extends ServiceProvider
         ], 'config');
     }
 
+    /**
+     * Register any application services.
+     *
+     * @return void
+     */
     public function register()
     {
         $this->mergeConfigFrom(

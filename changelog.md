@@ -2,6 +2,14 @@
 
 All notable changes to `ImageResizer` will be documented in this file.
 
+## VERSION 0.1.0
+- Added PHPCS rules
+- Added function docblock comments
+- Renamed Internal Exceptions
+- Refactorized code
+- resizeImage now returns string or null if the image could not be resized.
+  It still can throws ImageResizerException If any gone wrong.
+
 ## VERSION 0.0.10
 - Fixed file name slugify
 

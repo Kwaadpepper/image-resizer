@@ -2,6 +2,7 @@
 
 namespace Kwaadpepper\ImageResizer;
 
+use Illuminate\Cache\Repository;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
@@ -9,19 +10,28 @@ use Illuminate\Support\Str;
 use Intervention\Image\Exception\NotReadableException;
 use Intervention\Image\Image;
 use Intervention\Image\ImageManagerStatic;
-use Kwaadpepper\ImageResizer\Exceptions\ImageIsAlreadyCached;
-use Kwaadpepper\ImageResizer\Exceptions\ImageResizer as ExceptionsImageResizer;
+use Kwaadpepper\ImageResizer\Exceptions\ImageIsAlreadyCachedException;
+use Kwaadpepper\ImageResizer\Exceptions\ImageResizerException;
 
 class ImageResizer
 {
-    public static function resizeImage(string $imageSource, string $configName = null): string
+    /**
+     * Resize image
+     *
+     * @param string      $imageSource
+     * @param string|null $configName
+     * @return string|null Returns null if file does not exists, else returns the resized file path from cache.
+     * @throws \Kwaadpepper\ImageResizer\Exceptions\ImageResizerException If file is not readable or format is invalid.
+     * @phpcs:ignore Squiz.Commenting.FunctionCommentThrowTag.Missing
+     */
+    public static function resizeImage(string $imageSource, string $configName = null): ?string
     {
         if (!File::exists($imageSource) or File::isDirectory($imageSource)) {
             Log::debug(sprintf(
                 'Image Resizer: image %s not found',
                 $imageSource
             ));
-            return $imageSource;
+            return null;
         }
 
         $relativePath = config('image-resizer.cachePath');
@@ -34,6 +44,7 @@ class ImageResizer
             Str::slug(File::name($imageSource)),
             File::extension($imageSource)
         );
+
         $fileLastModified = File::lastModified($imageSource);
 
         try {
@@ -42,7 +53,7 @@ class ImageResizer
 
             self::assertFormatIsValid($format);
 
-            $hash = self::configToMd5($config, $fileLastModified);
+            $hash     = self::configToMd5($config, $fileLastModified);
             $lifeTime = config('image-resizer.lifeTime', 10);
 
             $path = sprintf(
@@ -54,11 +65,10 @@ class ImageResizer
 
             self::updatePathExtension($path, $format);
 
-            /** @var \Illuminate\Cache\Repository $cache */
             $cache = self::getCache();
 
             if ($cache->has($hash) && File::exists($path)) {
-                throw new ImageIsAlreadyCached();
+                throw new ImageIsAlreadyCachedException();
             }
 
             $image = self::genImage($imageSource);
@@ -82,9 +92,9 @@ class ImageResizer
                 true,
                 Carbon::now()->addMinutes($lifeTime)
             );
-        } catch (ImageIsAlreadyCached $e) {
+        } catch (ImageIsAlreadyCachedException $e) {
             Log::debug(sprintf('Image %s is already cached', $fileBaseName));
-        }
+        }//end try
 
         return $path;
     }
@@ -94,20 +104,28 @@ class ImageResizer
      * like passing an svg which is not a binary image
      * and cannot be resized
      *
-     * @param string $imageSource
+     * @param string      $imageSource
      * @param string|null $configName
-     * @return string
+     * @return string|null Returns null if file does not exists, else returns the resized file path from cache.
      */
-    public static function resizeImageOrIgnore(string $imageSource, string $configName = null): string
+    public static function resizeImageOrIgnore(string $imageSource, string $configName = null): ?string
     {
         try {
             return self::resizeImage($imageSource, $configName);
         } catch (NotReadableException $e) {
-            return $imageSource;
+            return null;
         }
     }
 
-    public static function configToMd5(array $config, $fileLastModified): string
+    /**
+     * Set config parameter to md5 value in order to detect changes.
+     *
+     * @param array   $config           The config array.
+     * @param integer $fileLastModified The config file timestamp.
+     * @return string
+     * @throws \Kwaadpepper\ImageResizer\Exceptions\ImageResizerException If config has an unsupported entry.
+     */
+    public static function configToMd5(array $config, int $fileLastModified): string
     {
         $string = '';
         foreach ($config as $param => $value) {
@@ -127,14 +145,14 @@ class ImageResizer
                     $string .= $param . serialize($value);
                     break;
                 default:
-                    throw new ExceptionsImageResizer(
+                    throw new ImageResizerException(
                         sprintf(
                             'Invalid config %s, unsupported type',
                             $param
                         )
                     );
-            }
-        }
+            }//end switch
+        }//end foreach
         $string .= $fileLastModified;
         return md5($string);
     }
@@ -149,15 +167,15 @@ class ImageResizer
     {
         $iManager = self::getManager();
         $fileData = File::get($sourcePath);
-        $image = $iManager::make($fileData);
+        $image    = $iManager::make($fileData);
 
         return $image;
     }
 
     /**
-     * Set the image in a canvas
+     * Resize image in a canvas operation
      *
-     * @param Image $image
+     * @param Image   $image
      * @param integer $width
      * @param integer $height
      * @return void
@@ -174,11 +192,12 @@ class ImageResizer
     }
 
     /**
-     * Set the image in a canvas
+     * Resize image operation
      *
-     * @param Image $image
-     * @param integer $width
-     * @param integer $height
+     * @param Image   $image     Intervention image to work with.
+     * @param integer $width     The image witdh target.
+     * @param integer $height    The image height target.
+     * @param boolean $keepRatio Does the image resize operation should keep ratio.
      * @return void
      */
     private static function resize(Image &$image, int $width, int $height, bool $keepRatio = false)
@@ -195,9 +214,10 @@ class ImageResizer
     }
 
     /**
-     * Trim the image
+     * Trim image operation
      *
-     * @param Image $image
+     * @param Image $image  Intervention image to work with.
+     * @param array $config Config to pass to Intervention image.
      * @return void
      */
     private static function trim(Image &$image, array $config = [])
@@ -210,37 +230,32 @@ class ImageResizer
      *
      * @param string $configName
      * @return array
-     * @throws ImageResizer if config is not valid
+     * @throws \Kwaadpepper\ImageResizer\Exceptions\ImageResizerException If config is not valid.
      */
     private static function getConfigValues(string $configName = null): array
     {
-        $config = config(sprintf('image-resizer.templates.%s', $configName));
-        if (!$config) {
-            $config = config('image-resizer.templates');
-            $config = array_shift($config);
-        }
+        $config = collect(config('image-resizer.templates'))
+        ->get($configName, collect(config('image-resizer.templates'))->first());
 
         $out = [];
 
-        $out['inCanvas'] = array_key_exists('inCanvas', $config) ?
-            $config['inCanvas'] : false;
-        $out['format'] = array_key_exists('format', $config) ?
-            $config['format'] : false;
-        $out['resize'] = array_key_exists('resize', $config) ?
-            $config['resize'] : false;
-        $out['keepRatio'] = array_key_exists('keepRatio', $config) ?
-            $config['keepRatio'] : false;
-        $out['trim'] = array_key_exists('trim', $config) ?
-            (is_array($config['trim']) ? $config['trim'] : []) : [];
+        $out = \array_replace_recursive([
+            'inCanvas' => false,
+            'format' => false,
+            'resize' => false,
+            'keepRatio' => false,
+            'trim' => []
+        ], $config);
 
-        $p = ['width', 'height'];
-        foreach ($p as $required) {
+        $out['trim'] = is_array($out['trim']) ? $out['trim'] : [];
+
+        foreach (['width', 'height'] as $required) {
             if (
                 ($out['resize'] or $out['inCanvas']) and (
                     !\array_key_exists($required, $config) or
                     !is_int($config[$required]))
             ) {
-                throw new ExceptionsImageResizer(
+                throw new ImageResizerException(
                     sprintf(
                         'Invalid config %s check %s is present and is integer',
                         $required,
@@ -265,7 +280,7 @@ class ImageResizer
     {
         $o = explode('.', $path);
         array_pop($o);
-        $o[] = $format;
+        $o[]  = $format;
         $path = implode('.', $o);
     }
 
@@ -275,13 +290,13 @@ class ImageResizer
      *
      * @param string $format
      * @return void
-     * @throws ExceptionsImageResizer if format is not valid
+     * @throws \Kwaadpepper\ImageResizer\Exceptions\ImageResizerException If format is not valid.
      */
     private static function assertFormatIsValid(string $format)
     {
         $formats = ['jpg', 'png', 'gif', 'tif', 'bmp', 'ico', 'psd', 'webp'];
         if (!in_array($format, $formats)) {
-            throw new ExceptionsImageResizer(sprintf(
+            throw new ImageResizerException(sprintf(
                 'format %s is not accepted, choose within %s',
                 $format,
                 implode(',', $formats)
@@ -293,13 +308,13 @@ class ImageResizer
      * Assert the file exists and is readable
      *
      * @param string $path
-     * @throws ExceptionsImageResizer if file does not exists
+     * @throws \Kwaadpepper\ImageResizer\Exceptions\ImageResizerException If file does not exists.
      * @return void
      */
     private static function assertFileIsReadable(string $path)
     {
         if (!File::isReadable($path)) {
-            throw new ExceptionsImageResizer(sprintf(
+            throw new ImageResizerException(sprintf(
                 'File %s is not readable',
                 $path
             ));
@@ -309,13 +324,16 @@ class ImageResizer
     /**
      * Get the cache driver
      *
-     * @return void
+     * @return \Illuminate\Cache\Repository
      */
-    private static function getCache()
+    private static function getCache(): Repository
     {
-        // Set output driver if set in config
-        $cache = config('image-resizer.cache');
-        return app()->make('cache')->driver($cache);
+        // Set output driver if set in config.
+        /** @var string|mixed|null */
+        $cache = config('image-resizer.cache', config('cache.default'));
+        /** @var \Illuminate\Cache\CacheManager */
+        $cacheManager = app()->make('cache');
+        return $cacheManager->driver($cache);
     }
 
     /**
