@@ -2,6 +2,9 @@
 
 All notable changes to `ImageResizer` will be documented in this file.
 
+## VERSION 0.1.1
+- Fixed strip prepended slash on source string
+
 ## VERSION 0.1.0
 - Added PHPCS rules
 - Added function docblock comments

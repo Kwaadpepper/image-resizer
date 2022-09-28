@@ -26,6 +26,7 @@ class ImageResizer
      */
     public static function resizeImage(string $imageSource, string $configName = null): ?string
     {
+        $imageSource = \ltrim($imageSource, '/');
         if (!File::exists($imageSource) or File::isDirectory($imageSource)) {
             Log::debug(sprintf(
                 'Image Resizer: image %s not found',
