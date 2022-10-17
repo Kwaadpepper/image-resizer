@@ -2,7 +2,9 @@
 
 namespace Kwaadpepper\ImageResizer;
 
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\ServiceProvider;
+use Kwaadpepper\ImageResizer\Console\AutoCleanCacheCommand;
 
 class ImageResizerServiceProvider extends ServiceProvider
 {
@@ -18,6 +20,22 @@ class ImageResizerServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__ . '/../config' => config_path(),
         ], 'config');
+
+        // * Register the command if we are using the application via the CLI .
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                AutoCleanCacheCommand::class,
+            ]);
+        }
+
+        // * Cron Run cleaner every half hour
+        $this->app->booted(function () {
+            if ($this->app->environment('production')) {
+                /** @var \Illuminate\Console\Scheduling\Schedule */
+                $schedule = $this->app->make(Schedule::class);
+                $schedule->command('image-resizer:clean-cache')->everyThirtyMinutes();
+            }
+        });
     }
 
     /**

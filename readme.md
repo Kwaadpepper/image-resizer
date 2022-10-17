@@ -39,6 +39,11 @@ $ composer require kwaadpepper/image-resizer
 
     <img src="{{ asset(resize('images/volaillesfr_landing.png', 'smallWebp')) }}" alt="My resized image">
 
+5 - Optional You can clean manually outdated cache file using command `php artisan image-resizer:clean-cache`
+    or force cleaning the cache using `php artisan cache:clean`
+
+**Please Note that is automatically scheduled on production every half hour**
+
 ## Change log
 
 Please see the [changelog](changelog.md) for more information on what has changed recently.
