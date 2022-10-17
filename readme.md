@@ -33,7 +33,9 @@ $ composer require kwaadpepper/image-resizer
         ]
     ]
 
-3 - in your blade template override an image link
+3 - type in console `php artisan storage:link`
+
+4 - in your blade template override an image link
 
     <img src="{{ asset(resize('images/volaillesfr_landing.png', 'smallWebp')) }}" alt="My resized image">
 

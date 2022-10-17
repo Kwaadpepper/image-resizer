@@ -2,6 +2,9 @@
 
 All notable changes to `ImageResizer` will be documented in this file.
 
+## VERSION 0.1.2
+- Fixed Using Storage instead of blind path, thus this package now need the usage of storage:link
+
 ## VERSION 0.1.1
 - Fixed strip prepended slash on source string
 
