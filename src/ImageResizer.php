@@ -65,12 +65,13 @@ class ImageResizer
             $lifeTime = config('image-resizer.lifeTime', 10);
 
             $cacheImageName = "{$hash}_{$fileBaseName}";
+            $diskImagePath  = config('image-resizer.cachePath') . "/{$cacheImageName}";
 
             self::updatePathExtension($cacheImageName, $format);
 
             $cache = self::getCache();
 
-            if ($cache->has($hash) && $disk->exists($cacheImageName)) {
+            if ($cache->has($hash) && $disk->exists($diskImagePath)) {
                 throw new ImageIsAlreadyCachedException();
             }
 
@@ -88,9 +89,7 @@ class ImageResizer
                 self::setInCanvas($image, $width, $height);
             }
 
-            $image->save($disk->path(
-                config('image-resizer.cachePath') . "/{$cacheImageName}"
-            ), null, $format);
+            $image->save($disk->path($diskImagePath), null, $format);
 
             $cache->put(
                 $hash,
@@ -101,11 +100,7 @@ class ImageResizer
             Log::debug(sprintf('Image %s is already cached', $fileBaseName));
         } //end try
 
-        return $publicPath ?
-            \ltrim(\parse_url($disk->url(
-                config('image-resizer.cachePath') . "/{$cacheImageName}"
-            ), \PHP_URL_PATH), '/') :
-            config('image-resizer.cachePath') . "/{$cacheImageName}";
+        return $publicPath ? \ltrim(\parse_url($disk->url($diskImagePath), \PHP_URL_PATH), '/') : $diskImagePath;
     }
 
     /**
