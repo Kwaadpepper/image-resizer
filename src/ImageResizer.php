@@ -6,6 +6,7 @@ use Illuminate\Cache\Repository;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Intervention\Image\Exception\NotReadableException;
 use Intervention\Image\Image;
@@ -18,15 +19,18 @@ class ImageResizer
     /**
      * Resize image
      *
-     * @param string      $imageSource
-     * @param string|null $configName
+     * @param string      $imageSource This picture shall exists using File::exists.
+     * @param string|null $configName  The configuration index to use.
+     * @param boolean     $publicPath  Output an public relative url (must use storage:link).
      * @return string|null Returns null if file does not exists, else returns the resized file path from cache.
      * @throws \Kwaadpepper\ImageResizer\Exceptions\ImageResizerException If file is not readable or format is invalid.
      * @phpcs:ignore Squiz.Commenting.FunctionCommentThrowTag.Missing
      */
-    public static function resizeImage(string $imageSource, string $configName = null): ?string
-    {
-        $imageSource = \ltrim($imageSource, '/');
+    public static function resizeImage(
+        string $imageSource,
+        string $configName = null,
+        bool $publicPath = false
+    ): ?string {
         if (!File::exists($imageSource) or File::isDirectory($imageSource)) {
             Log::debug(sprintf(
                 'Image Resizer: image %s not found',
@@ -35,10 +39,13 @@ class ImageResizer
             return null;
         }
 
-        $relativePath = config('image-resizer.cachePath');
+        /** @var \Illuminate\Filesystem\FilesystemAdapter */
+        $disk = Storage::disk('public');
+
+        $absPath = $disk->path(config('image-resizer.cachePath'));
 
         self::assertFileIsReadable($imageSource);
-        File::ensureDirectoryExists($relativePath);
+        File::ensureDirectoryExists($absPath);
 
         $fileBaseName = sprintf(
             '%s.%s',
@@ -57,18 +64,13 @@ class ImageResizer
             $hash     = self::configToMd5($config, $fileLastModified);
             $lifeTime = config('image-resizer.lifeTime', 10);
 
-            $path = sprintf(
-                '%s/%s_%s',
-                $relativePath,
-                $hash,
-                $fileBaseName
-            );
+            $cacheImageName = "{$hash}_{$fileBaseName}";
 
-            self::updatePathExtension($path, $format);
+            self::updatePathExtension($cacheImageName, $format);
 
             $cache = self::getCache();
 
-            if ($cache->has($hash) && File::exists($path)) {
+            if ($cache->has($hash) && $disk->exists($cacheImageName)) {
                 throw new ImageIsAlreadyCachedException();
             }
 
@@ -86,7 +88,9 @@ class ImageResizer
                 self::setInCanvas($image, $width, $height);
             }
 
-            $image->save($path, null, $format);
+            $image->save($disk->path(
+                config('image-resizer.cachePath') . "/{$cacheImageName}"
+            ), null, $format);
 
             $cache->put(
                 $hash,
@@ -95,9 +99,13 @@ class ImageResizer
             );
         } catch (ImageIsAlreadyCachedException $e) {
             Log::debug(sprintf('Image %s is already cached', $fileBaseName));
-        }//end try
+        } //end try
 
-        return $path;
+        return $publicPath ?
+            \ltrim(\parse_url($disk->url(
+                config('image-resizer.cachePath') . "/{$cacheImageName}"
+            ), \PHP_URL_PATH), '/') :
+            config('image-resizer.cachePath') . "/{$cacheImageName}";
     }
 
     /**
@@ -105,14 +113,18 @@ class ImageResizer
      * like passing an svg which is not a binary image
      * and cannot be resized
      *
-     * @param string      $imageSource
-     * @param string|null $configName
+     * @param string      $imageSource This picture shall exists using File::exists.
+     * @param string|null $configName  The configuration index to use.
+     * @param boolean     $publicPath  Output an public relative url (must use storage:link).
      * @return string|null Returns null if file does not exists, else returns the resized file path from cache.
      */
-    public static function resizeImageOrIgnore(string $imageSource, string $configName = null): ?string
-    {
+    public static function resizeImageOrIgnore(
+        string $imageSource,
+        string $configName = null,
+        bool $publicPath = false
+    ): ?string {
         try {
-            return self::resizeImage($imageSource, $configName);
+            return self::resizeImage($imageSource, $configName, $publicPath);
         } catch (NotReadableException $e) {
             return null;
         }
@@ -152,8 +164,8 @@ class ImageResizer
                             $param
                         )
                     );
-            }//end switch
-        }//end foreach
+            } //end switch
+        } //end foreach
         $string .= $fileLastModified;
         return md5($string);
     }
@@ -252,8 +264,7 @@ class ImageResizer
 
         foreach (['width', 'height'] as $required) {
             if (
-                ($out['resize'] or $out['inCanvas']) and (
-                    !\array_key_exists($required, $config) or
+                ($out['resize'] or $out['inCanvas']) and (!\array_key_exists($required, $config) or
                     !is_int($config[$required]))
             ) {
                 throw new ImageResizerException(

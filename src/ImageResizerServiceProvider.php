@@ -15,7 +15,8 @@ class ImageResizerServiceProvider extends ServiceProvider
     {
         require_once sprintf('%s/helpers.php', __DIR__);
 
-        $this->publishes([__DIR__ . '/../config' => config_path(),
+        $this->publishes([
+            __DIR__ . '/../config' => config_path(),
         ], 'config');
     }
 
