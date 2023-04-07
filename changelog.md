@@ -2,6 +2,8 @@
 
 All notable changes to `ImageResizer` will be documented in this file.
 
+## VERSION 0.1.3
+- Changed Support passing null to resize helper (for nullable props), will return an empty string
 ## VERSION 0.1.2
 - Fixed Using Storage instead of blind path, thus this package now need the usage of storage:link
 - Added command `php artisan image-resizer:clean-cache`
