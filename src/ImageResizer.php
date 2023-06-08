@@ -85,6 +85,10 @@ class ImageResizer
                 self::resize($image, $width, $height, $keepRatio);
             }
 
+            if ($fit) {
+                self::fit($image, $width, $height, $keepRatio);
+            }
+
             if ($inCanvas) {
                 self::setInCanvas($image, $width, $height);
             }
@@ -222,6 +226,28 @@ class ImageResizer
     }
 
     /**
+     * Fit image operation
+     *
+     * @param Image   $image     Intervention image to work with.
+     * @param integer $width     The image witdh target.
+     * @param integer $height    The image height target.
+     * @param boolean $keepRatio Does the image resize operation should keep ratio.
+     * @return void
+     */
+    private static function fit(Image &$image, int $width, int $height, bool $keepRatio = false)
+    {
+        $image->fit(
+            $width,
+            $height,
+            function ($constraint) use ($keepRatio) {
+                if ($keepRatio) {
+                    $constraint->aspectRatio();
+                }
+            }
+        );
+    }
+
+    /**
      * Trim image operation
      *
      * @param Image $image  Intervention image to work with.
@@ -250,6 +276,7 @@ class ImageResizer
         $out = \array_replace_recursive([
             'inCanvas' => false,
             'format' => false,
+            'fit' => false,
             'resize' => false,
             'keepRatio' => false,
             'trim' => []

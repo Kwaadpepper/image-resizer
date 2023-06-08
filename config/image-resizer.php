@@ -35,6 +35,7 @@ return [
      *   in order to use imagewebp(). If Imagick is used, it must be compiled
      *   with libwebp for WebP support.
      *   resize => will resize the image (boolean)
+     *   fit => Combine cropping and resizing to format image in a smart way (boolean)
      *   keepRatio => will keep image ratio wile resizing (boolean)
      *   trim => boolean to trim the image using border color
      *   inCanvas => to make sure image boundarie is respected

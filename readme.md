@@ -23,6 +23,14 @@ $ composer require kwaadpepper/image-resizer
 
 2 - Set a config in templates array (config/image-resizer.php)
 
+    /**
+     *   resize => will resize the image (boolean)
+     *   fit => Combine cropping and resizing to format image in a smart way (boolean)
+     *   keepRatio => will keep image ratio wile resizing (boolean)
+     *   trim => boolean to trim the image using border color
+     *   inCanvas => to make sure image boundarie is respected
+     *   format => select tha wantd ouput form, yan can just convert images if you want
+     */
     'templates' => [
         'smallWebp' => [
             'height' => 500,
