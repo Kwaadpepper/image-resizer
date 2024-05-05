@@ -53,6 +53,7 @@ class ImageResizer
         );
 
         $fileLastModified = File::lastModified($imageSource);
+        $diskImagePath    = $imageSource;
 
         try {
             $config = self::getConfigValues($configName);
@@ -112,12 +113,11 @@ class ImageResizer
                 true,
                 Carbon::now()->addMinutes($lifeTime)
             );
-            return $publicPath ? \ltrim(\parse_url($disk->url($diskImagePath), \PHP_URL_PATH), '/') : $diskImagePath;
         } catch (ImageIsAlreadyCachedException) {
             Log::debug(sprintf('Image %s is already cached', $fileBaseName));
         } //end try
 
-        return $imageSource;
+        return $publicPath ? \ltrim(\parse_url($disk->url($diskImagePath), \PHP_URL_PATH), '/') : $diskImagePath;
     }
 
     /**
