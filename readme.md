@@ -12,14 +12,16 @@ Resizes an image on the fly and returns the new link
 Via Composer
 
 ``` bash
-$ composer require kwaadpepper/image-resizer
+composer require kwaadpepper/image-resizer
 ```
 
 ## Usage
 
 1 - Publish config
 
-    php artisan vendor:publish --provider="Kwaadpepper\ImageResizer\ImageResizerServiceProvider"
+``` bash
+php artisan vendor:publish --provider="Kwaadpepper\ImageResizer\ImageResizerServiceProvider"
+```
 
 2 - Set a config in templates array (config/image-resizer.php)
 
@@ -45,12 +47,14 @@ $ composer require kwaadpepper/image-resizer
 
 4 - in your blade template override an image link
 
-    <img src="{{ asset(resize('images/volaillesfr_landing.png', 'smallWebp')) }}" alt="My resized image">
+``` html
+<img src="{{ asset(resize('images/volaillesfr_landing.png', 'smallWebp')) }}" alt="My resized image">
+```
 
 5 - Optional You can clean manually outdated cache file using command `php artisan image-resizer:clean-cache`
     or force cleaning the cache using `php artisan cache:clean`
 
-**Please Note that is automatically scheduled on production every half hour**
+- **Please Note that is automatically scheduled on production every half hour**
 
 ## Change log
 
@@ -59,7 +63,7 @@ Please see the [changelog](changelog.md) for more information on what has change
 ## Testing
 
 ``` bash
-$ composer test
+composer test
 ```
 
 ## Contributing
@@ -68,7 +72,7 @@ Please see [contributing.md](contributing.md) for details and a todolist.
 
 ## Security
 
-If you discover any security related issues, please email github@jeremydev.ovh instead of using the issue tracker.
+If you discover any security related issues, please email <github@jeremydev.ovh> instead of using the issue tracker.
 
 ## Credits
 
