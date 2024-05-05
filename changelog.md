@@ -2,6 +2,11 @@
 
 All notable changes to `ImageResizer` will be documented in this file.
 
+## VERSION 3.0.0
+
+- Changed to laravel 11 support only
+- Removed Intervention Image cache
+
 ## VERSION 2.1.0
 
 - Added fit option to resize smartly.

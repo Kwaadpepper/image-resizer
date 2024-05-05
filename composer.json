@@ -16,13 +16,15 @@
         "Resize"
     ],
     "require": {
-        "illuminate/support": "~10",
-        "laravel/framework": "~10",
-        "intervention/image": "^2.7.2",
-        "intervention/imagecache": "^2.6"
+        "php": "^8.2",
+        "illuminate/support": "~11",
+        "laravel/framework": "~11",
+        "intervention/image": "^3.6"
     },
     "require-dev": {
-        "slevomat/coding-standard": "^8.11"
+        "slevomat/coding-standard": "^8.11",
+        "larastan/larastan": "^2.0",
+        "orchestra/testbench": "^9.0"
     },
     "autoload": {
         "psr-4": {

@@ -19,7 +19,7 @@ class ImageResizerServiceProvider extends ServiceProvider
 
         $this->publishes([
             __DIR__ . '/../config' => config_path(),
-        ], 'config');
+        ], 'image-resizer-config');
 
         // * Register the command if we are using the application via the CLI .
         if ($this->app->runningInConsole()) {

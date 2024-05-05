@@ -2,15 +2,14 @@
 
 namespace Kwaadpepper\ImageResizer;
 
-use Illuminate\Cache\Repository;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Intervention\Image\Exception\NotReadableException;
 use Intervention\Image\Image;
-use Intervention\Image\ImageManagerStatic;
+use Intervention\Image\ImageManager;
+use Intervention\Image\Interfaces\ImageInterface;
 use Kwaadpepper\ImageResizer\Exceptions\ImageIsAlreadyCachedException;
 use Kwaadpepper\ImageResizer\Exceptions\ImageResizerException;
 
@@ -59,6 +58,19 @@ class ImageResizer
             $config = self::getConfigValues($configName);
             extract($config);
 
+            /** @var integer $height */
+            /** @var integer $width */
+            /** @var boolean $inCanvas */
+            /** @var boolean $fit */
+            /** @var boolean $resize */
+            /** @var boolean $keepRatio */
+            /** @var string $format */
+            /** @var array $trim */
+
+            if (empty($format)) {
+                $format = File::extension($imageSource);
+            }
+
             self::assertFormatIsValid($format);
 
             $hash     = self::configToMd5($config, $fileLastModified);
@@ -78,7 +90,7 @@ class ImageResizer
             $image = self::genImage($imageSource);
 
             if (count($trim)) {
-                self::trim($image, $trim);
+                self::trim($image);
             }
 
             if ($resize) {
@@ -100,11 +112,12 @@ class ImageResizer
                 true,
                 Carbon::now()->addMinutes($lifeTime)
             );
-        } catch (ImageIsAlreadyCachedException $e) {
+            return $publicPath ? \ltrim(\parse_url($disk->url($diskImagePath), \PHP_URL_PATH), '/') : $diskImagePath;
+        } catch (ImageIsAlreadyCachedException) {
             Log::debug(sprintf('Image %s is already cached', $fileBaseName));
         } //end try
 
-        return $publicPath ? \ltrim(\parse_url($disk->url($diskImagePath), \PHP_URL_PATH), '/') : $diskImagePath;
+        return $imageSource;
     }
 
     /**
@@ -124,7 +137,7 @@ class ImageResizer
     ): ?string {
         try {
             return self::resizeImage($imageSource, $configName, $publicPath);
-        } catch (NotReadableException $e) {
+        } catch (\RuntimeException) {
             return null;
         }
     }
@@ -173,13 +186,13 @@ class ImageResizer
      * Generate image
      *
      * @param string $sourcePath
-     * @return \Intervention\Image\Image
+     * @return \Intervention\Image\Interfaces\ImageInterface
      */
-    private static function genImage(string $sourcePath): Image
+    private static function genImage(string $sourcePath): ImageInterface
     {
         $iManager = self::getManager();
         $fileData = File::get($sourcePath);
-        $image    = $iManager::make($fileData);
+        $image    = $iManager->read($fileData);
 
         return $image;
     }
@@ -187,76 +200,100 @@ class ImageResizer
     /**
      * Resize image in a canvas operation
      *
-     * @param Image   $image
-     * @param integer $width
-     * @param integer $height
+     * @param \Intervention\Image\Interfaces\ImageInterface $image
+     * @param integer                                       $width
+     * @param integer                                       $height
      * @return void
+     * @throws \Kwaadpepper\ImageResizer\Exceptions\ImageResizerException In case of failure.
      */
-    private static function setInCanvas(Image &$image, int $width, int $height)
+    private static function setInCanvas(ImageInterface &$image, int $width, int $height)
     {
-        $image->resizeCanvas(
-            $width,
-            $height,
-            'center',
-            false,
-            'rgba(0, 0, 0, 0)'
-        );
+        try {
+            $image->resizeCanvas(
+                $width,
+                $height,
+                'rgba(0, 0, 0, 0)',
+                'center'
+            );
+        } catch (\RuntimeException $e) {
+            throw new ImageResizerException($e->getMessage(), 1, $e);
+        }
     }
 
     /**
      * Resize image operation
      *
-     * @param Image   $image     Intervention image to work with.
-     * @param integer $width     The image witdh target.
-     * @param integer $height    The image height target.
-     * @param boolean $keepRatio Does the image resize operation should keep ratio.
+     * @param \Intervention\Image\Interfaces\ImageInterface $image     Intervention image to work with.
+     * @param integer                                       $width     The image witdh target.
+     * @param integer                                       $height    The image height target.
+     * @param boolean                                       $keepRatio Does the image resize operation
+     *                                                                 should keep ratio.
      * @return void
+     * @throws \Kwaadpepper\ImageResizer\Exceptions\ImageResizerException In case of failure.
      */
-    private static function resize(Image &$image, int $width, int $height, bool $keepRatio = false)
+    private static function resize(ImageInterface &$image, int $width, int $height, bool $keepRatio): void
     {
-        $image->resize(
-            $width,
-            $height,
-            function ($constraint) use ($keepRatio) {
-                if ($keepRatio) {
-                    $constraint->aspectRatio();
-                }
+        try {
+            if ($keepRatio) {
+                $image->scale(
+                    $width,
+                    $height
+                );
+                return;
             }
-        );
+            $image->resize(
+                $width,
+                $height
+            );
+        } catch (\RuntimeException $e) {
+            throw new ImageResizerException($e->getMessage(), 2, $e);
+        }
     }
 
     /**
      * Fit image operation
      *
-     * @param Image   $image     Intervention image to work with.
-     * @param integer $width     The image witdh target.
-     * @param integer $height    The image height target.
-     * @param boolean $keepRatio Does the image resize operation should keep ratio.
+     * @param \Intervention\Image\Interfaces\ImageInterface $image     Intervention image to work with.
+     * @param integer                                       $width     The image witdh target.
+     * @param integer                                       $height    The image height target.
+     * @param boolean                                       $keepRatio Does the image resize operation
+     *                                                                 should keep ratio.
      * @return void
+     * @throws \Kwaadpepper\ImageResizer\Exceptions\ImageResizerException In case of failure.
      */
-    private static function fit(Image &$image, int $width, int $height, bool $keepRatio = false)
+    private static function fit(ImageInterface &$image, int $width, int $height, bool $keepRatio): void
     {
-        $image->fit(
-            $width,
-            $height,
-            function ($constraint) use ($keepRatio) {
-                if ($keepRatio) {
-                    $constraint->aspectRatio();
-                }
+        try {
+            if ($keepRatio) {
+                $image->scale(
+                    $width,
+                    $height
+                );
+                return;
             }
-        );
+            $image->resizeDown(
+                $width,
+                $height
+            );
+        } catch (\RuntimeException $e) {
+            throw new ImageResizerException($e->getMessage(), 3, $e);
+        }
     }
 
     /**
      * Trim image operation
      *
-     * @param Image $image  Intervention image to work with.
-     * @param array $config Config to pass to Intervention image.
+     * @param \Intervention\Image\Image $image Intervention image to work with.
      * @return void
+     * @throws \Kwaadpepper\ImageResizer\Exceptions\ImageResizerException In case of failure.
      */
-    private static function trim(Image &$image, array $config = [])
+    private static function trim(Image &$image)
     {
-        call_user_func_array([$image, 'trim'], $config);
+        try {
+            $image->trim();
+        } catch (\RuntimeException $e) {
+            throw new ImageResizerException($e->getMessage(), 4, $e);
+        }
     }
 
     /**
@@ -269,7 +306,7 @@ class ImageResizer
     private static function getConfigValues(string $configName = null): array
     {
         $config = collect(config('image-resizer.templates'))
-        ->get($configName, collect(config('image-resizer.templates'))->first());
+            ->get($configName, collect(config('image-resizer.templates'))->first());
 
         $out = [];
 
@@ -358,9 +395,9 @@ class ImageResizer
     /**
      * Get the cache driver
      *
-     * @return \Illuminate\Cache\Repository
+     * @return \Illuminate\Contracts\Cache\Repository
      */
-    private static function getCache(): Repository
+    private static function getCache(): \Illuminate\Contracts\Cache\Repository
     {
         // Set output driver if set in config.
         /** @var string|mixed|null */
@@ -373,12 +410,12 @@ class ImageResizer
     /**
      * Get the image driver manager
      *
-     * @return \Intervention\Image\ImageManagerStatic
+     * @return \Intervention\Image\ImageManager
      */
     private static function getManager()
     {
-        $iM = new ImageManagerStatic();
-        $iM->configure(config('image-resizer'));
-        return $iM;
+        $wantedDriver = str(config('image-resizer.driver', 'gd'))->title();
+        $driver       = "\Intervention\Image\Drivers\\{$wantedDriver}\Driver";
+        return ImageManager::withDriver($driver);
     }
 }
