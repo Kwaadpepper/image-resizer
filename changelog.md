@@ -2,6 +2,8 @@
 
 All notable changes to `ImageResizer` will be documented in this file.
 
+## VERSION 2.1.1
+- Fixed extension output
 ## VERSION 2.1.0
 - Added fit option to resize smartly.
 ## VERSION 2.0.0

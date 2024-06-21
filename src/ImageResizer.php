@@ -65,9 +65,9 @@ class ImageResizer
             $lifeTime = config('image-resizer.lifeTime', 10);
 
             $cacheImageName = "{$hash}_{$fileBaseName}";
-            $diskImagePath  = config('image-resizer.cachePath') . "/{$cacheImageName}";
-
             self::updatePathExtension($cacheImageName, $format);
+            $diskImagePath = config('image-resizer.cachePath') . "/{$cacheImageName}";
+
 
             $cache = self::getCache();
 
