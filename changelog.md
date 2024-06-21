@@ -2,6 +2,10 @@
 
 All notable changes to `ImageResizer` will be documented in this file.
 
+## VERSION 3.0.2
+
+- Fixed picture output had wrong extension
+
 ## VERSION 3.0.1
 
 - Fixed picture output was wrong when already having picture in cache.
