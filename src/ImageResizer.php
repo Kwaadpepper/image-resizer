@@ -27,7 +27,7 @@ class ImageResizer
      */
     public static function resizeImage(
         string $imageSource,
-        string $configName = null,
+        ?string $configName = null,
         bool $publicPath = false
     ): ?string {
         if (!File::exists($imageSource) or File::isDirectory($imageSource)) {
@@ -131,7 +131,7 @@ class ImageResizer
      */
     public static function resizeImageOrIgnore(
         string $imageSource,
-        string $configName = null,
+        ?string $configName = null,
         bool $publicPath = false
     ): ?string {
         try {
@@ -298,11 +298,11 @@ class ImageResizer
     /**
      * Get the config values
      *
-     * @param string $configName
+     * @param string|null $configName
      * @return array
      * @throws \Kwaadpepper\ImageResizer\Exceptions\ImageResizerException If config is not valid.
      */
-    private static function getConfigValues(string $configName = null): array
+    private static function getConfigValues(?string $configName = null): array
     {
         $config = collect(config('image-resizer.templates'))
             ->get($configName, collect(config('image-resizer.templates'))->first());

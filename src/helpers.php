@@ -9,7 +9,7 @@ use Kwaadpepper\ImageResizer\ImageResizer;
  * @param string      $configName
  * @return string Returns the resized file path from cache of the original file path if resize could not be done.
  */
-function resize($path, string $configName = null): string
+function resize($path, ?string $configName = null): string
 {
     if (!is_string($path)) {
         return '';
@@ -24,7 +24,7 @@ function resize($path, string $configName = null): string
  * @param string      $configName
  * @return string Returns the resized file path from cache of the original file path if resize could not be done.
  */
-function resizePublic($path, string $configName = null): string
+function resizePublic($path, ?string $configName = null): string
 {
     if (!is_string($path)) {
         return '';
