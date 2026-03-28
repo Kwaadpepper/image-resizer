@@ -23,7 +23,7 @@
     },
     "require-dev": {
         "slevomat/coding-standard": "^8.11",
-        "larastan/larastan": "^2.0",
+        "larastan/larastan": "^3.9",
         "orchestra/testbench": "^9.0|^10.0"
     },
     "autoload": {
