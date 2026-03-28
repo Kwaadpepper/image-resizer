@@ -1,9 +1,8 @@
-# Enum
+# Image Resizer
 
 [![Latest Version on Packagist][ico-version]][link-packagist]
 [![Total Downloads][ico-downloads]][link-downloads]
-[![Build Status][ico-travis]][link-travis]
-[![StyleCI][ico-styleci]][link-styleci]
+[![CI][ico-ci]][link-ci]
 
 Resizes an image on the fly and returns the new link
 
@@ -85,12 +84,10 @@ MIT. Please see the [license file](license.md) for more information.
 
 [ico-version]: https://img.shields.io/packagist/v/kwaadpepper/image-resizer?style=flat-square
 [ico-downloads]: https://img.shields.io/packagist/dt/kwaadpepper/image-resizer?style=flat-square
-[ico-travis]: https://img.shields.io/travis/kwaadpepper/image-resizer/master.svg?style=flat-square
-[ico-styleci]: https://styleci.io/repos/12345678/shield
+[ico-ci]: https://img.shields.io/github/actions/workflow/status/Kwaadpepper/image-resizer/ci.yml?branch=master&style=flat-square&label=CI
 
 [link-packagist]: https://packagist.org/packages/kwaadpepper/image-resizer
 [link-downloads]: https://packagist.org/packages/kwaadpepper/image-resizer
-[link-travis]: https://travis-ci.org/kwaadpepper/image-resizer
-[link-styleci]: https://styleci.io/repos/12345678
+[link-ci]: https://github.com/Kwaadpepper/image-resizer/actions/workflows/ci.yml
 [link-author]: https://github.com/kwaadpepper
 [link-contributors]: ../../contributors
