@@ -2,6 +2,17 @@
 
 All notable changes to `ImageResizer` will be documented in this file.
 
+## VERSION 4.0.0
+
+- **BREAKING** Upgraded Intervention Image from v3 to v4
+- **BREAKING** PHP 8.3+ required
+- Added Laravel 13 support
+- Added PHPUnit tests for ImageResizer
+- Added GitHub Actions CI workflow (PHPCS, PHPStan, PHPUnit)
+- Fixed exception handling to use Intervention Image v4 exception hierarchy
+- Updated PHPStan and Larastan to latest versions
+- Updated phpunit.xml for PHPUnit 12 compatibility
+
 ## VERSION 3.0.2
 
 - Fixed picture output had wrong extension
