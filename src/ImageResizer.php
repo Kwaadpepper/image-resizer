@@ -10,6 +10,7 @@ use Illuminate\Support\Str;
 use Intervention\Image\ImageManager;
 use Intervention\Image\Interfaces\ImageInterface;
 use Intervention\Image\Interfaces\ImageManagerInterface;
+use Intervention\Image\Exceptions\RuntimeException as InterventionRuntimeException;
 use Kwaadpepper\ImageResizer\Exceptions\ImageIsAlreadyCachedException;
 use Kwaadpepper\ImageResizer\Exceptions\ImageResizerException;
 
@@ -137,7 +138,7 @@ class ImageResizer
     ): ?string {
         try {
             return self::resizeImage($imageSource, $configName, $publicPath);
-        } catch (\RuntimeException) {
+        } catch (InterventionRuntimeException) {
             return null;
         }
     }
@@ -213,7 +214,7 @@ class ImageResizer
                 $height,
                 'rgba(0, 0, 0, 0)'
             );
-        } catch (\RuntimeException $e) {
+        } catch (InterventionRuntimeException $e) {
             throw new ImageResizerException($e->getMessage(), 1, $e);
         }
     }
@@ -243,7 +244,7 @@ class ImageResizer
                 $width,
                 $height
             );
-        } catch (\RuntimeException $e) {
+        } catch (InterventionRuntimeException $e) {
             throw new ImageResizerException($e->getMessage(), 2, $e);
         }
     }
@@ -273,7 +274,7 @@ class ImageResizer
                 $width,
                 $height
             );
-        } catch (\RuntimeException $e) {
+        } catch (InterventionRuntimeException $e) {
             throw new ImageResizerException($e->getMessage(), 3, $e);
         }
     }
@@ -289,7 +290,7 @@ class ImageResizer
     {
         try {
             $image->trim();
-        } catch (\RuntimeException $e) {
+        } catch (InterventionRuntimeException $e) {
             throw new ImageResizerException($e->getMessage(), 4, $e);
         }
     }
