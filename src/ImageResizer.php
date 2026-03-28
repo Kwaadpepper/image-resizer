@@ -138,7 +138,7 @@ class ImageResizer
     ): ?string {
         try {
             return self::resizeImage($imageSource, $configName, $publicPath);
-        } catch (InterventionRuntimeException) {
+        } catch (\Exception) {
             return null;
         }
     }
