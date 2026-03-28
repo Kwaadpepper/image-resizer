@@ -47,5 +47,8 @@
         "allow-plugins": {
             "dealerdirect/phpcodesniffer-composer-installer": true
         }
+    },
+    "scripts": {
+        "test": "vendor/bin/phpunit"
     }
 }
