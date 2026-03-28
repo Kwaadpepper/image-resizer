@@ -7,9 +7,9 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Intervention\Image\Image;
 use Intervention\Image\ImageManager;
 use Intervention\Image\Interfaces\ImageInterface;
+use Intervention\Image\Interfaces\ImageManagerInterface;
 use Kwaadpepper\ImageResizer\Exceptions\ImageIsAlreadyCachedException;
 use Kwaadpepper\ImageResizer\Exceptions\ImageResizerException;
 
@@ -30,7 +30,7 @@ class ImageResizer
         ?string $configName = null,
         bool $publicPath = false
     ): ?string {
-        if (!File::exists($imageSource) or File::isDirectory($imageSource)) {
+        if (!File::exists($imageSource) || File::isDirectory($imageSource)) {
             Log::debug(sprintf(
                 'Image Resizer: image %s not found',
                 $imageSource
@@ -105,7 +105,8 @@ class ImageResizer
                 self::setInCanvas($image, $width, $height);
             }
 
-            $image->save($disk->path($diskImagePath), null, $format);
+            $image->encodeUsingFileExtension($format)
+                ->save($disk->path($diskImagePath));
 
             $cache->put(
                 $hash,
@@ -191,9 +192,8 @@ class ImageResizer
     {
         $iManager = self::getManager();
         $fileData = File::get($sourcePath);
-        $image    = $iManager->read($fileData);
 
-        return $image;
+        return  $iManager->decode($fileData);
     }
 
     /**
@@ -211,8 +211,7 @@ class ImageResizer
             $image->resizeCanvas(
                 $width,
                 $height,
-                'rgba(0, 0, 0, 0)',
-                'center'
+                'rgba(0, 0, 0, 0)'
             );
         } catch (\RuntimeException $e) {
             throw new ImageResizerException($e->getMessage(), 1, $e);
@@ -282,11 +281,11 @@ class ImageResizer
     /**
      * Trim image operation
      *
-     * @param \Intervention\Image\Image $image Intervention image to work with.
+     * @param \Intervention\Image\Interfaces\ImageInterface $image Intervention image to work with.
      * @return void
      * @throws \Kwaadpepper\ImageResizer\Exceptions\ImageResizerException In case of failure.
      */
-    private static function trim(Image &$image)
+    private static function trim(ImageInterface &$image)
     {
         try {
             $image->trim();
@@ -322,8 +321,8 @@ class ImageResizer
 
         foreach (['width', 'height'] as $required) {
             if (
-                ($out['resize'] or $out['inCanvas']) and (!\array_key_exists($required, $config) or
-                    !is_int($config[$required]))
+                ($out['resize'] || $out['inCanvas'])
+                && (!\array_key_exists($required, $config) || !is_int($config[$required]))
             ) {
                 throw new ImageResizerException(
                     sprintf(
@@ -409,12 +408,13 @@ class ImageResizer
     /**
      * Get the image driver manager
      *
-     * @return \Intervention\Image\ImageManager
+     * @return \Intervention\Image\Interfaces\ImageManagerInterface
      */
-    private static function getManager()
+    private static function getManager(): ImageManagerInterface
     {
         $wantedDriver = str(config('image-resizer.driver', 'gd'))->title();
         $driver       = "\Intervention\Image\Drivers\\{$wantedDriver}\Driver";
-        return ImageManager::withDriver($driver);
+
+        return ImageManager::usingDriver($driver);
     }
 }
