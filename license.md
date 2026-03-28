@@ -1,6 +1,6 @@
 MIT License (!! includes CC BY-NC 3.0 parts please read Readme.md)
 
-Copyright (c) 2019 Jérémy Munsch
+Copyright (c) 2026 Jérémy Munsch
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
