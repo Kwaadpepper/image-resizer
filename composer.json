@@ -17,14 +17,14 @@
     ],
     "require": {
         "php": "^8.2",
-        "illuminate/support": "~11|~12",
-        "laravel/framework": "~11|~12",
+        "illuminate/support": "~11|~12|~13",
+        "laravel/framework": "~11|~12|~13",
         "intervention/image": "^3.6"
     },
     "require-dev": {
         "slevomat/coding-standard": "^8.11",
         "larastan/larastan": "^2.0",
-        "orchestra/testbench": "^9.0"
+        "orchestra/testbench": "^9.0|^10.0"
     },
     "autoload": {
         "psr-4": {
