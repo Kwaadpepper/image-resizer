@@ -76,7 +76,7 @@ class ImageResizer
             self::assertFormatIsValid($format);
 
             $hash     = self::configToMd5($config, $fileLastModified);
-            $lifeTime = config('image-resizer.lifeTime', 10);
+            $lifeTime = config('image-resizer.lifetime', 10);
 
             $cacheImageName = "{$hash}_{$fileBaseName}";
             self::updatePathExtension($cacheImageName, $format);
