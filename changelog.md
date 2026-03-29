@@ -2,6 +2,12 @@
 
 All notable changes to `ImageResizer` will be documented in this file.
 
+## VERSION 4.0.1
+
+- Fixed cache cleanup command never deleting files (inverted time comparison logic)
+- Fixed config key mismatch (`lifeTime` → `lifetime`) causing fallback value to always be used
+- Changed default cache lifetime from 1 hour to 1 week (10 080 minutes)
+
 ## VERSION 4.0.0
 
 - **BREAKING** Upgraded Intervention Image from v3 to v4

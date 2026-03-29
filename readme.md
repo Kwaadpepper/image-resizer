@@ -50,10 +50,11 @@ php artisan vendor:publish --provider="Kwaadpepper\ImageResizer\ImageResizerServ
 <img src="{{ asset(resize('images/volaillesfr_landing.png', 'smallWebp')) }}" alt="My resized image">
 ```
 
-5 - Optional You can clean manually outdated cache file using command `php artisan image-resizer:clean-cache`
-    or force cleaning the cache using `php artisan cache:clean`
+5 - Optional You can manually clean outdated cache files using command `php artisan image-resizer:clean-cache`
+    or force cleaning the cache using `php artisan cache:clear`
 
-- **Please Note that is automatically scheduled on production every half hour**
+- **Please note that this is automatically scheduled on production every half hour**
+- Cache lifetime defaults to 1 week (configurable via `lifetime` in `config/image-resizer.php`). Cached images are regenerated on demand.
 
 ## Change log
 
