@@ -22,9 +22,9 @@ return [
      * Image cache life time
      * This is given in minutes
      * Here the cache for images is
-     * one hour
+     * one week
      */
-    'lifetime' => 60,
+    'lifetime' => 10080,
 
     /**
      * Format can specifiy to which format save the image
