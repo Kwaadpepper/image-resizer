@@ -33,16 +33,16 @@ class AutoCleanCacheCommand extends Command
         /** @var \Illuminate\Filesystem\FilesystemAdapter */
         $disk = Storage::disk('public');
         /** @var integer */
-        $lifeTime = config('image-resizer.lifeTime', 10);
+        $lifeTime = config('image-resizer.lifetime', 10);
 
         $commandName = basename(str_replace('\\', '/', self::class));
 
         \collect($disk->files(config('image-resizer.cachePath')))
             ->map(function (string $filePath) use ($disk, $lifeTime, $commandName) {
                 $fileTimestamp    = Carbon::parse($disk->lastModified($filePath));
-                $timeoutTimestamp = Carbon::now()->addMinutes($lifeTime);
+                $timeoutTimestamp = Carbon::now()->subMinutes($lifeTime);
                 // * Remove outdated cache file if needed.
-                if ($timeoutTimestamp->lessThan($fileTimestamp)) {
+                if ($fileTimestamp->lessThan($timeoutTimestamp)) {
                     if (!$disk->delete($filePath)) {
                         throw new \RuntimeException(
                             "{$commandName} : Failed to remove file old cache file '{$filePath}'"
